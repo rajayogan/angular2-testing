@@ -1,55 +1,38 @@
 /* tslint:disable:no-unused-variable */
 import { AppComponent } from './app.component';
+import {Router, RouteRegistry, ROUTER_PRIMARY_COMPONENT, RouteParams} from 'angular2/router';
+import {RootRouter} from 'angular2/src/router/router';
+import {SpyLocation} from 'angular2/router/testing';
+import {inject, beforeEachProviders, beforeEach} from 'angular2/testing';
+import {provide} from 'angular2/core';
+import {Location} from 'angular2/platform/common';
 
-import {
-  expect, it, iit, xit,
-  describe, ddescribe, xdescribe,
-  beforeEach, beforeEachProviders, withProviders,
-  async, inject, TestComponentBuilder
-} from 'angular2/testing';
-
-import { By }             from 'angular2/platform/browser';
-import { provide }        from 'angular2/core';
-import { ViewMetadata }   from 'angular2/core';
-import { PromiseWrapper } from 'angular2/src/facade/promise';
-
-////////  SPECS  /////////////
-
-/// Delete this
-describe('Smoke test', () => {
-  it('should run a passing test', () => {
-    expect(true).toEqual(true, 'should pass');
+describe('Router tests', () => {
+  var location, router;
+  
+  beforeEachProviders(() => [
+    RouteRegistry,
+    provide(Location, {useClass: SpyLocation}),
+    provide(Router, {useClass: RootRouter}),
+    provide(ROUTER_PRIMARY_COMPONENT, {useValue: AppComponent})
+  ]);
+  
+  beforeEach(inject([Router, Location], (r, l) => {
+    router = r;
+    location = l;
+  }));
+  
+  it('Should be able to navigate to Home', done => {    
+    router.navigate(['Home']).then(() => {
+      expect(location.path()).toBe('/home');
+      done();
+    }).catch(e => done.fail(e));
   });
-});
 
-describe('AppComponent with new', function () {
-  it('should instantiate component', () => {
-    expect(new AppComponent()).toBeDefined('Whoopie!');
+  it('should redirect not registered urls to Home', done => {
+    router.navigateByUrl('/unknown').then(() => {
+      expect(location.path()).toBe('/home');
+      done();
+    }).catch(e => done.fail(e));
   });
-});
-
-describe('AppComponent with TCB', function () {
-
-  it('should instantiate component',
-    async(inject([TestComponentBuilder], (tcb: TestComponentBuilder) => {
-
-    tcb.createAsync(AppComponent).then(fixture => {
-      expect(fixture.componentInstance instanceof AppComponent).toBe(true, 'should create AppComponent');
-    });
-  })));
-
-  it('should have expected <h1> text',
-    async(inject([TestComponentBuilder], (tcb: TestComponentBuilder) => {
-
-      tcb.createAsync(AppComponent).then(fixture => {
-      // fixture.detectChanges();  // would need to resolve a binding but we don't have a binding
-
-      let h1 = fixture.debugElement.query(el => el.name === 'h1').nativeElement;  // it works
-
-          h1 = fixture.debugElement.query(By.css('h1')).nativeElement;            // preferred
-
-      expect(h1.innerText).toMatch(/angular 2 app/i, '<h1> should say something about "Angular 2 App"');
-    });
-
-  })));
 });
